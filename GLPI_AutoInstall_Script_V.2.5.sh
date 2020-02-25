@@ -4,7 +4,7 @@ clear
 
 MiseaJour(){
 	cd /etc
-	mkdir /GLPI_logs
+	mkdir GLPI_logs
 	echo -e "\033[33m ==> Mise à jour de l'OS\033[0m"
 	majcentos="yum -y update"
     echo "Lancement de la commande: $majcentos"
@@ -127,9 +127,6 @@ installationPHP(){
 	sleep 1
 	eval $php4 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
 	echo "Redemarrage du service httpd"
-	rm -f /etc/php.ini
-	cd /etc
-	wget https://github.com/RLouisy826/Test/blob/master/php.ini
 	sleep 1
 	systemctl restart httpd
 	exit_status=$?
