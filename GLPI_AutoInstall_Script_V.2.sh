@@ -79,12 +79,13 @@ installationApache(){
 	installApache="yum -y install httpd"
 		echo "Lancement de la commande: $installApache"
 		sleep 1
+	eval $installApache >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
+	systemctlApache1="systemctl start httpd"
+		eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
 	cd /tmp
 	wget https://github.com/RLouisy826/Test/blob/master/httpd.conf
 	rm -f /etc/httpd/conf/httpd.conf
 	mv /tmp/httpd.conf /etc/httpd/conf
-	eval $installApache >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
-	systemctlApache1="systemctl start httpd"
 	eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
 	echo "Initialisation du service httpd"
 	sleep 1
