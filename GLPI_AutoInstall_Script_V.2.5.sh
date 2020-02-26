@@ -83,7 +83,6 @@ installationApache(){
 	systemctlApache1="systemctl start httpd"
 		eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
 	cd /tmp
-	wget https://github.com/RLouisy826/Test/blob/master/httpd.conf
 	rm -f /etc/httpd/conf/httpd.conf
 	mv /tmp/httpd.conf /etc/httpd/conf
 	eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -105,8 +104,10 @@ installationApache(){
 }
 
 installationPHP(){
+	oldtimezone=";date.tiemzone = "
+	newtimezone="date.timezone = Europe/Paris"
 	echo -e "\033[33m ==> Installation PHP\033[0m"
-	php1="yum -y install yum-utils epel-release"
+	php1="yum -y install yum-utils epel-release http://rpms.remirepo.net/enterprise/remi-release-7.rpm"
 	echo "Lancement de la commande: $php1"
 	sleep 1
 	eval $php1 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -126,6 +127,11 @@ installationPHP(){
 	echo "Lancement de la commande: $php4"
 	sleep 1
 	eval $php4 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
+
+	cd /tmp
+	rm -f /etc/httpd/conf/httpd.conf
+	mv /tmp/httpd.conf /etc/httpd/conf
+
 	echo "Redemarrage du service httpd"
 	sleep 1
 	systemctl restart httpd
@@ -140,6 +146,7 @@ installationPHP(){
 }
 
 InstallationGLPI(){
+	cd /tmp
 	echo -e "\033[33m ==> Installation de GLPI\033[0m"
 	installGLPI="wget https://github.com/glpi-project/glpi/releases/download/9.4.5/glpi-9.4.5.tgz"
 	echo "Lancement de la commande: $installGLPI"
@@ -150,7 +157,7 @@ InstallationGLPI(){
 	echo "Lancement de la commande: $glpi1"
 	sleep 1
 	eval $glpi1 >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
-	mv glpi /var/www/html/
+	mv glpi /var/www/html
 	exit_status=$?
 	if [ $exit_status -eq 0 ]; then
 		echo -e "\033[32mGLPI à été installé\033[0m\n"
