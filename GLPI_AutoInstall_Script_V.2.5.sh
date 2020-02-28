@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-
+read -s -p "Entrer le mot de passe root: " pass
 MiseaJour(){
 	cd /etc
 	mkdir GLPI_logs
@@ -52,15 +52,15 @@ installationMariaDB(){
 	echo "gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB" >> /etc/yum.repos.d/MariaDB.repo
 	echo "gpgcheck=1" >> /etc/yum.repos.d/MariaDB.repo
 
-	installMaria="yum -y install mariadb-server mariadb-client"
+	installMaria="yum -y install mariadb-server"
 		echo "Lancement de la commande: $installMaria"
 		sleep 1
 		eval $installMaria >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
 		echo "Initialisation du service mariadb"
 		sleep 1
-	systemctlMaria1="systemctl start mariadb"
+	systemctlMaria1="systemctl enable mariadb"
 	eval $systemctlMaria1 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
-	systemctlMaria2="systemctl enable mariadb"
+	systemctlMaria2="systemctl start mariadb"
 	eval $systemctlMaria2 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
 	systemctlMaria3="systemctl status mariadb"
 	eval $systemctlMaria3 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -83,8 +83,7 @@ installationApache(){
 	systemctlApache1="systemctl start httpd"
 		eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
 	cd /tmp
-	rm -f /etc/httpd/conf/httpd.conf
-	mv /tmp/httpd.conf /etc/httpd/conf
+	mv /tmp/httpd.conf /etc/httpd/conf/
 	eval $systemctlApache1 >> /etc/GLPI_logs/log_Apache.txt 2> /etc/GLPI_logs/logerreur.txt
 	echo "Initialisation du service httpd"
 	sleep 1
@@ -129,9 +128,8 @@ installationPHP(){
 	eval $php4 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
 
 	cd /tmp
-	rm -f /etc/httpd/conf/httpd.conf
-	mv /tmp/httpd.conf /etc/httpd/conf
-
+	mv /tmp/httpd.conf /etc/httpd/conf/
+	sed -i "s/$oldtimezone/$newtimezone/g" /etc/php.ini
 	echo "Redemarrage du service httpd"
 	sleep 1
 	systemctl restart httpd
@@ -157,7 +155,7 @@ InstallationGLPI(){
 	echo "Lancement de la commande: $glpi1"
 	sleep 1
 	eval $glpi1 >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
-	mv glpi /var/www/html
+	mv glpi /var/www/html/
 	exit_status=$?
 	if [ $exit_status -eq 0 ]; then
 		echo -e "\033[32mGLPI à été installé\033[0m\n"
@@ -170,10 +168,10 @@ InstallationGLPI(){
 
 DB_creation(){
 	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
-	mysql -u root -prootroot -e "CREATE DATABASE glpi;"
-	mysql -u root -prootroot -e	"CREATE USER 'glpi'@'localhost' IDENTIFIED BY 'glpipass';"
-	mysql -u root -prootroot -e	"GRANT ALL PRIVILEGES ON glpi.* TO 'glpi'@'localhost';"
-	mysql -u root -prootroot -e	"FLUSH PRIVILEGES;"
+	mysql -u root -p$pass -e "CREATE DATABASE glpi;"
+	mysql -u root -p$pass -e	"CREATE USER 'glpi'@'localhost' IDENTIFIED BY 'glpipass';"
+	mysql -u root -p$pass -e	"GRANT ALL PRIVILEGES ON glpi.* TO 'glpi'@'localhost';"
+	mysql -u root -p$pass -e	"FLUSH PRIVILEGES;"
 	exit_status=$?
 	if [ $exit_status -eq 0 ]; then
 		echo -e "\033[32mLa base de données a été creé\033[0m\n"
@@ -199,8 +197,8 @@ Setsebool_on(){
 }
 
 Rights_glpi(){
-	chown -R apache:apache /var/www/html/glpi
-	chmod -R 777 /var/www/html/glpi
+	chown -R apache:apache /var/www/html/glpi/
+	chmod -R 766 /var/www/html/glpi/
 }
 
 credentials(){
