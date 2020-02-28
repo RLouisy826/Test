@@ -1,7 +1,9 @@
 #!/bin/bash
 
 clear
+echo -e "\033[32mVeuillez autoriser le Script à lancer l'installation\033[0m\n"
 read -s -p "Entrer le mot de passe root: " pass
+
 MiseaJour(){
 	cd /etc
 	mkdir GLPI_logs
@@ -129,7 +131,6 @@ installationPHP(){
 
 	cd /tmp
 	mv /tmp/httpd.conf /etc/httpd/conf/
-	sed -i "s/$oldtimezone/$newtimezone/g" /etc/php.ini
 	echo "Redemarrage du service httpd"
 	sleep 1
 	systemctl restart httpd
@@ -218,9 +219,11 @@ DB_creation
 Setsebool_on
 Rights_glpi
 credentials
-echo -e "\tGLPI a bien été installé\n"
+echo -e "\tGLPI a bien été installé"
 echo -e "\tAccéder à votre glpi en utilisant un navigateur web \n"
 echo -e "\t \n"
 echo -e "\tLes identifiants de la Base de données se trouve ici : \n"
 echo -e "\t/etc/DB_Info.txt\n"
 echo -e "\t \n"
+echo -e "N'oubliez de paramètrer votre Timezone dans : \n"
+echo -e "/etc/php.ini"
