@@ -1,8 +1,21 @@
 #!/bin/bash
 
 clear
-echo -e "\033[32mVeuillez autoriser le Script à lancer l'installation\033[0m\n"
-read -s -p "Entrer le mot de passe root: " pass
+echo -e "\033[32mVeuillez entrer le mot de passe root avant de lancer le script\033[0m\n"
+read -s -p "Entrer le mot de passe root: " passr
+echo -e "\033[32mInstallation de la Base de données\033[0m\n"
+breakdbloop= '1'
+while [$breakdbloop == '1']
+do
+	read  -p "Do you want to use custom options : [y/n]" dbadvcreation
+	if [$dbadvcreation == 'y' ] || [$dbadvcreation == 'yes'] || [$dbadvcreation == 'Y']; then
+		dbfunction="DB_adv_creation"
+		$breakdbloop='0'
+	elif [$dbadvcreation == 'n' ] || [$dbadvcreation == 'no'] || [$dbadvcreation == 'N'];
+		dbfunction="DB_creation"
+		$breakdbloop='0'
+	fi
+done
 
 MiseaJour(){
 	cd /etc
@@ -167,12 +180,54 @@ InstallationGLPI(){
 	sleep 1
 }
 
+
+
+DB_adv_creation (){
+	breakadvdbloop='1'
+	dbinfo_ok='no'
+	defaultIP='localhost'
+	while [$breakadvdbloop=='1']
+	do
+		read  -p "Please name your database : " dbname
+		read  -p "Please choose a username : " dbusername
+		read -s -p "Please choose a password : " dbuserpass
+		read  -p "Please enter the IP of the machine that you will use to connect ($defaultIP by default): " dbuserclientIP
+		clear
+		sleep 1
+		echo -e "Your database will be called : $dbname"
+		echo -e "Your username will be : $dbusername"
+		echo -e "You will connect from : $dbuserclientIP"
+		echo -e "Is this information correct ?"
+		read -p "[yes/no]" dbinfo_ok
+		if [$dbinfo_ok == 'y' ] || [$dbinfo_ok == 'yes'] || [$dbinfo_ok == 'Y']; then
+			$breakadvdbloop='0'
+		else
+			$breakadvdbloop='1'
+		fi
+	done
+	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
+	mysql -u root -p$passr -e "CREATE DATABASE $dbname;"
+	mysql -u root -p$passr -e	"CREATE USER '$dbusername'@'$dbuserclientIP' IDENTIFIED BY '$dbuserpass';"
+	mysql -u root -p$passr -e	"GRANT ALL PRIVILEGES ON $dbname.* TO '$dbusername'@'$dbuserclientIP';"
+	mysql -u root -p$passr -e	"FLUSH PRIVILEGES;"
+	exit_status=$?
+	if [ $exit_status -eq 0 ]; then
+		echo -e "\033[32mLa base de données a été creé\033[0m\n"
+	else
+		echo -e "\033[31mLa base de données n'a pas été creé\033[0m\n"
+		exit 1;
+	fi
+		sleep 1
+}
+
+
+
 DB_creation(){
 	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
-	mysql -u root -p$pass -e "CREATE DATABASE glpi;"
-	mysql -u root -p$pass -e	"CREATE USER 'glpi'@'localhost' IDENTIFIED BY 'glpipass';"
-	mysql -u root -p$pass -e	"GRANT ALL PRIVILEGES ON glpi.* TO 'glpi'@'localhost';"
-	mysql -u root -p$pass -e	"FLUSH PRIVILEGES;"
+	mysql -u root -p$passr -e "CREATE DATABASE glpi;"
+	mysql -u root -p$passr -e	"CREATE USER 'glpi'@'localhost' IDENTIFIED BY 'glpipass';"
+	mysql -u root -p$passr -e	"GRANT ALL PRIVILEGES ON glpi.* TO 'glpi'@'localhost';"
+	mysql -u root -p$passr -e	"FLUSH PRIVILEGES;"
 	exit_status=$?
 	if [ $exit_status -eq 0 ]; then
 		echo -e "\033[32mLa base de données a été creé\033[0m\n"
@@ -209,21 +264,22 @@ credentials(){
 	echo "BDD : glpi">> /etc/DB_Info.txt
 }
 
+echo -e "\t \n"
 echo -e "\tProgramme d'installation de GLPI 9.4.5 \n"
 MiseaJour
 installationMariaDB
 installationApache
 installationPHP
 InstallationGLPI
-DB_creation
+$dbfunction
 Setsebool_on
 Rights_glpi
 credentials
 echo -e "\tGLPI a bien été installé"
-echo -e "\tAccéder à votre glpi en utilisant un navigateur web \n"
+echo -e "\t\tAccéder à votre glpi en utilisant un navigateur web \n"
 echo -e "\t \n"
 echo -e "\tLes identifiants de la Base de données se trouve ici : \n"
-echo -e "\t/etc/DB_Info.txt\n"
+echo -e "\t\t/etc/DB_Info.txt\n"
 echo -e "\t \n"
-echo -e "N'oubliez de paramètrer votre Timezone dans : \n"
-echo -e "/etc/php.ini"
+echo -e "\tN'oubliez de paramètrer votre Timezone dans : \n"
+echo -e "\t\t/etc/php.ini"
