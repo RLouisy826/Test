@@ -3,17 +3,18 @@
 clear
 echo -e "\033[32mVeuillez entrer le mot de passe root avant de lancer le script\033[0m\n"
 read -s -p "Entrer le mot de passe root: " passr
+clear
 echo -e "\033[32mInstallation de la Base de données\033[0m\n"
-breakdbloop= '1'
-while [$breakdbloop == '1']
+breakdbloop= 1
+while [ $breakdbloop == 1 ]
 do
 	read  -p "Do you want to use custom options : [y/n]" dbadvcreation
-	if [$dbadvcreation == 'y' ] || [$dbadvcreation == 'yes'] || [$dbadvcreation == 'Y']; then
+	if [ $dbadvcreation == "y" ] || [ $dbadvcreation == "yes" ] || [ $dbadvcreation == "Y" ]; then
 		dbfunction="DB_adv_creation"
-		$breakdbloop='0'
-	elif [$dbadvcreation == 'n' ] || [$dbadvcreation == 'no'] || [$dbadvcreation == 'N'];
+		$breakdbloop= 0
+	elif [ $dbadvcreation == "n" ] || [ $dbadvcreation == "no" ] || [ $dbadvcreation == "N" ]; then
 		dbfunction="DB_creation"
-		$breakdbloop='0'
+		$breakdbloop= 0
 	fi
 done
 
@@ -186,7 +187,7 @@ DB_adv_creation (){
 	breakadvdbloop='1'
 	dbinfo_ok='no'
 	defaultIP='localhost'
-	while [$breakadvdbloop=='1']
+	while [ $breakadvdbloop=='1' ]
 	do
 		read  -p "Please name your database : " dbname
 		read  -p "Please choose a username : " dbusername
@@ -199,10 +200,10 @@ DB_adv_creation (){
 		echo -e "You will connect from : $dbuserclientIP"
 		echo -e "Is this information correct ?"
 		read -p "[yes/no]" dbinfo_ok
-		if [$dbinfo_ok == 'y' ] || [$dbinfo_ok == 'yes'] || [$dbinfo_ok == 'Y']; then
-			$breakadvdbloop='0'
+		if [ $dbinfo_ok == "y" ] || [ $dbinfo_ok == "yes" ] || [ $dbinfo_ok == "Y" ]; then
+			$breakadvdbloop= 0
 		else
-			$breakadvdbloop='1'
+			$breakadvdbloop= 1
 		fi
 	done
 	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
