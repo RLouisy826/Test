@@ -4,19 +4,22 @@ sleep
 echo -e "\033[32mPour lancer le script il faut un compte SU\033[0m\n"
 sleep
 clear
-passr=$(whiptail --passwordbox "Veuillez entrer le mot de passe root avant de lancer le script" 8 78 --title "password dialog" 3>&1 1>&2 2>&3)
-exitstatus=$?
-if [ $exitstatus = 0 ]; then
+#Ce prompt demande le mot de passe root qui sera nécessaire lors de mla création de la base de données
+Password () {
+  passr=$(whiptail --passwordbox "Veuillez entrer le mot de passe root avant de lancer le script" 8 78 --title "password dialog" 3>&1 1>&2 2>&3)
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
     echo "Vous avez entrer votre MDP"
-else
+  else
     echo "Vous avez annulé"
-fi
-
+  fi
+}
+#Sélection de l'OS
 OPTION=$(whiptail --title "Menu Box" --menu "Choisissez votre distriubtion linux" 15 60 4 \
 		"1" "Centos 7" \
 		"2" "Centos 8" \
 		"3" "Debian 9" \
-		"4" "Arch linux"  3>&1 1>&2 2>&3)
+		"4" "Debian 10"  3>&1 1>&2 2>&3)
 
 		exitstatus=$?
 		if [ $exitstatus = 0 ]; then
@@ -26,6 +29,8 @@ OPTION=$(whiptail --title "Menu Box" --menu "Choisissez votre distriubtion linux
 		fi
 
 
+
+#Fonction de mise à jour des paquets sur CentOS
 MiseaJour(){
 	cd /etc
 	mkdir GLPI_logs
@@ -76,6 +81,7 @@ MiseaJour(){
 
 }
 
+#Fonction qui installe MariaDB sur CentOS
 installationMariaDB(){
 	echo -e "\033[33m ==> Installation MariaDB\033[0m"
 	echo "[mariadb]" > /etc/yum.repos.d/MariaDB.repo
@@ -106,6 +112,7 @@ installationMariaDB(){
 	sleep 1
 }
 
+#Fonction qui installe Apache (HTTPD) sur CentOS
 installationApache(){
 	echo -e "\033[33m ==> Installation d'Apache\033[0m"
 	installApache="yum -y install httpd"
@@ -134,6 +141,7 @@ installationApache(){
 	sleep 1
 }
 
+#Fonction qui installe le PHP ainsi que les extensions PHP nécessaire (CentOS 7)
 installationPHP(){
 	echo -e "\033[33m ==> Installation PHP\033[0m"
 	php1="yum -y install yum-utils epel-release"
@@ -169,7 +177,9 @@ installationPHP(){
 	sleep 1
 }
 
+#Téléchargement des fichiers d'installation de GLPI
 InstallationGLPI(){
+  cd /tmp
 	echo -e "\033[33m ==> Installation de GLPI\033[0m"
 	installGLPI="wget https://github.com/glpi-project/glpi/releases/download/9.4.5/glpi-9.4.5.tgz"
 	echo "Lancement de la commande: $installGLPI"
@@ -180,7 +190,6 @@ InstallationGLPI(){
 	echo "Lancement de la commande: $glpi1"
 	sleep 1
 	eval $glpi1 >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
-	cd /tmp
 	mv glpi /var/www/html/
 	exit_status=$?
 	if [ $exit_status -eq 0 ]; then
@@ -192,6 +201,7 @@ InstallationGLPI(){
 	sleep 1
 }
 
+#Cette fonction permet à l'utilisateur de choisir une installe simple ou personaliser de la base de données
 DBinstallation(){
 	clear
 	echo -e "\033[32mInstallation de la Base de données\033[0m\n"
@@ -209,6 +219,7 @@ DBinstallation(){
 	done
 }
 
+#Fonction qui gère la création de la base de données avec les options personaliser
 DB_adv_creation (){
 	dbinfo_ok="no"
 	defaultIP="localhost"
@@ -244,6 +255,7 @@ DB_adv_creation (){
 		sleep 1
 }
 
+#Fonction qui crée une base de données simple
 DB_creation(){
 	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
 	mysql -u root -p$passr -e "CREATE DATABASE glpi;"
@@ -260,6 +272,7 @@ DB_creation(){
 	sleep 1
 }
 
+#Fonction qui active les valeurs "bool" (Exclusivement sur CentOS)
 Setsebool_on(){
 	echo -e "\033[33m ==> Activation des variables Bool\033[0m"
 	setsebool -P httpd_can_network_connect on
@@ -274,19 +287,41 @@ Setsebool_on(){
 	sleep 1
 }
 
+#Attribution des droits sur les dossiers nécessaire
 Rights_glpi(){
 	chown -R apache:apache /var/www/html/glpi
 	chmod -R 777 /var/www/html/glpi
 }
 
+#Création de fichiers qui contient les infos sur la base de données créer
 credentials(){
-	echo "Inforamtion de connexion à la base de données">> /etc/DB_Info.txt
-	echo "ID : glpi">> /etc/DB_Info.txt
-	echo "MDP : glpipass">> /etc/DB_Info.txt
-	echo "BDD : glpi">> /etc/DB_Info.txt
+  if [ $dbfunction = 'DB_adv_creation'] || [ $dbfunction = 'DB_adv_creation_DB9']; then
+    sleep
+    echo "Inforamtion de connexion Ã  la base de donnÃ©es">> /etc/DB_Info.txt
+    echo "ID : $dbusername">> /etc/DB_Info.txt
+    echo "MDP : $dbuserpass">> /etc/DB_Info.txt
+    echo "BDD : $dbname">> /etc/DB_Info.txt
+    echo "Host : $dbuserclientIP">> /etc/DB_Info.txt
+    clear
+    echo "Info regarding Database is located here : /etc/DB_Info.txt"
+    echo "Appuyer sur Entrée pour continuer..."
+    read a
+  else
+    echo "Inforamtion de connexion Ã  la base de donnÃ©es">> /etc/DB_Info.txt
+    echo "ID : glpi">> /etc/DB_Info.txt
+    echo "MDP : glpipass">> /etc/DB_Info.txt
+    echo "BDD : glpi">> /etc/DB_Info.txt
+    echo "Host : $dbuserclientIP">> /etc/DB_Info.txt
+    clear
+    echo "Info regarding Database is located here : /etc/DB_Info.txt"
+    echo "Appuyer sur Entrée pour continuer..."
+    read a
+  fi
 }
 
+#Cette fonction gère l'installation de GLPI sur CentOS 7
 CentOS7_Function(){
+  Password
 	MiseaJour
 	installationMariaDB
 	installationApache
@@ -305,6 +340,12 @@ CentOS7_Function(){
 	echo -e "\t \n"
 }
 
+#Cette fonction sert à effacer le script lorsqu'il à fini d'être installer
+self_destruct(){
+  rm -f /tmp/GLPI_AutoInstall_Script_V2.5_whiptail_Tweaks.sh
+}
+
+#Fonction de mise à jour des paquets sur Debian
 MiseaJour_DB9(){
 	cd /etc
 	mkdir GLPI_logs
@@ -338,6 +379,7 @@ MiseaJour_DB9(){
 	sleep 1
 }
 
+#Fonction qui installe MariaDB sur Debian
 installationMariaDB_DB9(){
 	echo -e "\033[33m ==> Installation MariaDB\033[0m"
 	installMaria="apt -y install mariadb-server"
@@ -362,6 +404,8 @@ installationMariaDB_DB9(){
 	sleep 1
 }
 
+
+#Fonction qui installe Apache 2 sur Debian
 installationApache_DB9(){
 	echo -e "\033[33m ==> Installation d'Apache\033[0m"
 	installApache="apt -y install apache2"
@@ -384,6 +428,8 @@ installationApache_DB9(){
 	sleep 1
 }
 
+
+#Fonction qui installe le PHP ainsi que les extensions PHP nécessaire (Debian 9)
 installationPHP_DB9(){
 	echo -e "\033[33m ==> Installation PHP\033[0m"
 	php1="apt -y install php"
@@ -392,7 +438,7 @@ installationPHP_DB9(){
 	eval $php1 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
 
 	echo -e "\033[33m ==> Installation des extensions PHP\033[0m"
-	php_exts="apt -y install php-opcache php-apcu php-curl php-fileinfo php-gd php-json php-mbstring php-mysqli php-session php-zlib php-simplexml php-xml php-cli php-domxml php-imap php-ldap php-openssl php-xmlrpc"
+	php_exts="apt -y install php7.0-opcache php-apcu php-curl php7.0-common php-gd php-json php-mbstring php7.0-mysql php7.0-xml php-xml php-cli php-imap php-ldap php-xmlrpc"
 	echo "Lancement de la commande: $php_exts"
 	sleep 1
 	eval $php_exts >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -409,54 +455,33 @@ installationPHP_DB9(){
 	sleep 1
 }
 
-InstallationGLPI_DB9(){
-	echo -e "\033[33m ==> Installation de GLPI\033[0m"
-  cd /tmp
-	installGLPI="wget https://github.com/glpi-project/glpi/releases/download/9.4.5/glpi-9.4.5.tgz"
-	echo "Lancement de la commande: $installGLPI"
-	sleep 1
-	eval $installGLPI >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
-	echo -e "\033[33m ==> Decompression de GLPI\033[0m\n"
-	glpi1="tar -xvzf glpi-9.4.5.tgz"
-	echo "Lancement de la commande: $glpi1"
-	sleep 1
-	eval $glpi1 >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
-	mv glpi /var/www/html/
-	exit_status=$?
-	if [ $exit_status -eq 0 ]; then
-		echo -e "\033[32mGLPI à été installé\033[0m\n"
-	else
-		echo -e "\033[31mGLPI n'est pas installer\033[0m\n"
-		exit 1;
-	fi
-	sleep 1
-}
-
-DBinstallation(){
+#La fonction DBinstallation_DB9 = DBinstallation mais avec les subtilités nécessaire au bon fonctionnement sur Debian 9
+DBinstallation_DB9(){
 	clear
 	echo -e "\033[32mInstallation de la Base de données\033[0m\n"
 	breakdbloop="no"
-	while [ $breakdbloop == "no" ]
+	while [ $breakdbloop = "no" ]
 	do
 		read  -p "Do you want to use custom options : [y/n]" dbadvcreation
-		if [ $dbadvcreation == "y" ] || [ $dbadvcreation == "yes" ] || [ $dbadvcreation == "Y" ]; then
-			dbfunction="DB_adv_creation"
+		if [ $dbadvcreation = "y" ] || [ $dbadvcreation = "yes" ] || [ $dbadvcreation = "Y" ]; then
+			dbfunction="DB_adv_creation_DB9"
 			breakdbloop="yes"
-		elif [ $dbadvcreation == "n" ] || [ $dbadvcreation == "no" ] || [ $dbadvcreation == "N" ]; then
+		elif [ $dbadvcreation = "n" ] || [ $dbadvcreation = "no" ] || [ $dbadvcreation = "N" ]; then
 			dbfunction="DB_creation"
 			breakdbloop="yes"
 		fi
 	done
 }
 
-DB_adv_creation (){
+#Fonction qui gère la création de la base de données avec les options personaliser
+DB_adv_creation_DB9 (){
 	dbinfo_ok="no"
 	defaultIP="localhost"
 	while true
 	do
 		read  -p "Please name your database : " dbname
 		read  -p "Please choose a username : " dbusername
-		read -s -p "Please choose a password : " dbuserpass
+		read  -p "Please choose a password : " dbuserpass
 		read  -p "Please enter the IP of the machine that you will use to connect ($defaultIP by default): " dbuserclientIP
 		clear
 		sleep 1
@@ -465,7 +490,7 @@ DB_adv_creation (){
 		echo -e "Your username will be : $dbusername"
 		echo -e "You will connect from : $dbuserclientIP"
 		read -p "Is this information correct ? [yes/no]" dbinfo_ok
-		if [ $dbinfo_ok == "y" ] || [ $dbinfo_ok == "yes" ] || [ $dbinfo_ok == "Y" ]; then
+		if [ $dbinfo_ok = "y" ] || [ $dbinfo_ok = "yes" ] || [ $dbinfo_ok = "Y" ]; then
 			break
 		fi
 	done
@@ -484,42 +509,15 @@ DB_adv_creation (){
 		sleep 1
 }
 
-DB_creation(){
-	echo -e "\033[33m ==> Création de la Base de données GLPI\033[0m"
-	mysql -u root -p$passr -e "CREATE DATABASE glpi;"
-	mysql -u root -p$passr -e	"CREATE USER 'glpi'@'localhost' IDENTIFIED BY 'glpipass';"
-	mysql -u root -p$passr -e	"GRANT ALL PRIVILEGES ON glpi.* TO 'glpi'@'localhost';"
-	mysql -u root -p$passr -e	"FLUSH PRIVILEGES;"
-	exit_status=$?
-	if [ $exit_status -eq 0 ]; then
-		echo -e "\033[32mLa base de données a été creé\033[0m\n"
-	else
-		echo -e "\033[31mLa base de données n'a pas été creé\033[0m\n"
-		exit 1;
-	fi
-	sleep 1
-}
-
-
-Rights_glpi(){
-	chown -R apache:apache /var/www/html/glpi
-	chmod -R 777 /var/www/html/glpi
-}
-
-credentials(){
-	echo "Inforamtion de connexion à la base de données">> /etc/DB_Info.txt
-	echo "ID : glpi">> /etc/DB_Info.txt
-	echo "MDP : glpipass">> /etc/DB_Info.txt
-	echo "BDD : glpi">> /etc/DB_Info.txt
-}
-
+#Cette fonction gère l'installation de GLPI sur Debian 9
 Debian9_Function(){
+  Password
 	MiseaJour_DB9
 	installationMariaDB_DB9
 	installationApache_DB9
 	installationPHP_DB9
-	InstallationGLPI_DB9
-	DBinstallation
+	InstallationGLPI
+	DBinstallation_DB9
 	$dbfunction
 	Rights_glpi
 	credentials
@@ -531,17 +529,69 @@ Debian9_Function(){
 	echo -e "\t \n"
 }
 
+#Fonction qui installe le PHP ainsi que les extensions PHP nécessaire (Debian 10)
+installationPHP_DB10(){
+	echo -e "\033[33m ==> Installation PHP\033[0m"
+	php1="apt -y install php"
+	echo "Lancement de la commande: $php1"
+	sleep 1
+	eval $php1 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
+
+	echo -e "\033[33m ==> Installation des extensions PHP\033[0m"
+	php_exts="apt -y install php7.3-opcache php-apcu php-curl php7.3-common php-gd php-json php-mbstring php7.3-mysql php7.3-xml php-xml php-cli php-imap php-ldap php-xmlrpc"
+	echo "Lancement de la commande: $php_exts"
+	sleep 1
+	eval $php_exts >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
+	echo "Redemarrage du service Apache"
+	sleep 1
+	service apache2 restart
+	exit_status=$?
+	if [ $exit_status -eq 0 ]; then
+		echo -e "\033[32mPHP a été installé\033[0m\n"
+	else
+		echo -e "\033[31mPHP n'est pas installé\033[0m\n"
+		exit 1;
+	fi
+	sleep 1
+}
+
+#Cette fonction gère l'installation de GLPI sur Debian 10
+Debian10_Function(){
+  Password
+  MiseaJour_DB9
+  installationMariaDB_DB9
+  installationApache_DB9
+  installationPHP_DB10
+  InstallationGLPI
+  DBinstallation_DB9
+  $dbfunction
+  Rights_glpi
+  credentials
+}
+
+
 clear
 echo -e "\tProgramme d'installation de GLPI 9.4.5 \n"
-if [ $OPTION == "1" ]; then
+#Cette partie du script va déterminer quel fonction à utiliser en fonction de l'OS choisi au début
+if [ $OPTION -eq "1" ]; then
 	CentOS7_Function
 fi
-if [ $OPTION == "2" ]; then
+if [ $OPTION -eq "2" ]; then
 	CentOS8_Function
 fi
-if [ $OPTION == "3" ]; then
+if [ $OPTION -eq "3" ]; then
 	Debian9_Function
 fi
-if [ $OPTION == "4" ]; then
-	Arch_Function
+if [ $OPTION -eq "4" ]; then
+	Debian10_Function
 fi
+
+#The list under this comment are bugs that need to be fixed and/or bypassed
+#On Debian 10 the "MiseaJour_DB9" function does not update, is this an OS specific issue ?
+#Add a "How to use guide" in the first selection menu, so if there are specifics for an OS they will be explicitly expressed at that location.
+#CentOS 8 still does not have support due to an issue concerning the names of the packets that differ from CentOS 7 & Debian (9 & 10)[Mariadb problem]
+#Verify bug concerning the simple DB installation
+#
+#
+#
+#
