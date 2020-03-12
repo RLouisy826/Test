@@ -581,7 +581,7 @@ Debian10_Function(){
 #Cette fonction gère l'intsallation de MariaDB sur CentOS 8
 installationMariaDB_C08(){
 	echo -e "\033[33m ==> Installation MariaDB\033[0m"
-	installMaria="yum -y install mariadb"
+	installMaria="yum -y install mariadb-server"
 		echo "Lancement de la commande: $installMaria"
 		sleep 1
 		eval $installMaria >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
