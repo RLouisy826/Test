@@ -29,11 +29,13 @@ OPTION=$(whiptail --title "Menu Box" --menu "Choisissez votre distriubtion linux
 		fi
 
 
-
+CreationLog(){
+  cd /etc
+	mkdir GLPI_logs
+}
 #Fonction de mise à jour des paquets sur CentOS
 MiseaJour(){
-	cd /etc
-	mkdir GLPI_logs
+
 	echo -e "\033[33m ==> Mise à jour de l'OS\033[0m"
 
 
@@ -81,7 +83,7 @@ MiseaJour(){
 
 }
 
-#Fonction qui installe MariaDB sur CentOS
+#Fonction qui installe MariaDB sur CentOS 7
 installationMariaDB(){
 	echo -e "\033[33m ==> Installation MariaDB\033[0m"
 	echo "[mariadb]" > /etc/yum.repos.d/MariaDB.repo
@@ -322,6 +324,7 @@ credentials(){
 #Cette fonction gère l'installation de GLPI sur CentOS 7
 CentOS7_Function(){
   Password
+  CreationLog
 	MiseaJour
 	installationMariaDB
 	installationApache
@@ -347,8 +350,6 @@ self_destruct(){
 
 #Fonction de mise à jour des paquets sur Debian
 MiseaJour_DB9(){
-	cd /etc
-	mkdir GLPI_logs
 	echo -e "\033[33m ==> Mise à jour de l'OS\033[0m"
 
 
@@ -512,6 +513,7 @@ DB_adv_creation_DB9 (){
 #Cette fonction gère l'installation de GLPI sur Debian 9
 Debian9_Function(){
   Password
+  CreationLog
 	MiseaJour_DB9
 	installationMariaDB_DB9
 	installationApache_DB9
@@ -558,6 +560,7 @@ installationPHP_DB10(){
 #Cette fonction gère l'installation de GLPI sur Debian 10
 Debian10_Function(){
   Password
+  CreationLog
   MiseaJour_DB9
   installationMariaDB_DB9
   installationApache_DB9
@@ -567,8 +570,68 @@ Debian10_Function(){
   $dbfunction
   Rights_glpi
   credentials
+  echo -e "\tGLPI a bien été installé\n"
+	echo -e "\tAccéder à votre glpi en utilisant un navigateur web \n"
+	echo -e "\t \n"
+	echo -e "\tLes identifiants de la Base de données se trouve ici : \n"
+	echo -e "\t/etc/DB_Info.txt\n"
+	echo -e "\t \n"
 }
 
+#Cette fonction gère l'intsallation de MariaDB sur CentOS 8
+installationMariaDB_C08(){
+	echo -e "\033[33m ==> Installation MariaDB\033[0m"
+	installMaria="yum -y install mariadb"
+		echo "Lancement de la commande: $installMaria"
+		sleep 1
+		eval $installMaria >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
+		echo "Initialisation du service mariadb"
+		sleep 1
+	systemctlMaria1="systemctl enable mariadb"
+	eval $systemctlMaria1 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
+	systemctlMaria2="systemctl start mariadb"
+	eval $systemctlMaria2 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
+	systemctlMaria3="systemctl status mariadb"
+	eval $systemctlMaria3 >> /etc/GLPI_logs/log_MariaDB.txt 2> /etc/GLPI_logs/logerreur.txt
+	exit_status=$?
+	if [ $exit_status -eq 0 ]; then
+		echo -e "\033[32mMariaDB à bien été installé\033[0m\n"
+	else
+		echo -e "\033[31mL'installation n'a pas abouti\033[0m\n"
+		exit 1;
+	fi
+	sleep 1
+}
+
+DB_secure_install(){
+  echo "Veuillez répondre au question suivantes"
+  echo -e "\n"
+  echo "Appuyer sur Entrée pour continuer..."
+  read a
+  mysql_secure_installation
+}
+
+CentOS8_Function(){
+  Password
+  CreationLog
+	MiseaJour
+	installationMariaDB_C08
+  DB_secure_install
+	installationApache
+	installationPHP
+	InstallationGLPI
+	DBinstallation
+	$dbfunction
+	Setsebool_on
+	Rights_glpi
+	credentials
+	echo -e "\tGLPI a bien été installé\n"
+	echo -e "\tAccéder à votre glpi en utilisant un navigateur web \n"
+	echo -e "\t \n"
+	echo -e "\tLes identifiants de la Base de données se trouve ici : \n"
+	echo -e "\t/etc/DB_Info.txt\n"
+	echo -e "\t \n"
+}
 
 clear
 echo -e "\tProgramme d'installation de GLPI 9.4.5 \n"
@@ -587,12 +650,11 @@ if [ $OPTION -eq "4" ]; then
 fi
 
 #The list under this comment are bugs that need to be fixed and/or bypassed
-#On Debian 10 the "MiseaJour_DB9" function does not update, is this an OS specific issue ?
+#On Debian 10 the "MiseaJour_DB9" function does not update, is this an OS specific issue ? (This issue only concerns Debian 10 [Buster] repositories)
 #Add a "How to use guide" in the first selection menu, so if there are specifics for an OS they will be explicitly expressed at that location.
 #CentOS 8 still does not have support due to an issue concerning the names of the packets that differ from CentOS 7 & Debian (9 & 10)[Mariadb problem]
-#Verify bug concerning the simple DB installation
 #========================================================== How To Use ===============================================================================================
 #For CentOS 7 add the script in /tmp as well as the httpd.conf file located on my desktop\SCC\Projets\Git\test\httpd.conf
-#For CentOS 8 the script does not work, not yet implemented (for next release)
+#For CentOS 8 the script does not work, not yet implemented (commands are listed but not implemented), for this OS you will need to run "mysql_secure_installation" and set a root password (this is not a glitch, i had no choice but do it, otherwise my SQL commands do not run)
 #For Debian 9 nothing special just run the script
-#For Debian 10 nothing special just run the script
+#For Debian 10 nothing special just run the script but make sure to comment out "MiseaJour_DB9" that is located within the "Debian10_Function" & runthis command "mkdir /etc/GLPI_logs"
