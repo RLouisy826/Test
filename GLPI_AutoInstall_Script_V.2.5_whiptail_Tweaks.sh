@@ -653,6 +653,7 @@ fi
 #On Debian 10 the "MiseaJour_DB9" function does not update, is this an OS specific issue ? (This issue only concerns Debian 10 [Buster] repositories)
 #Add a "How to use guide" in the first selection menu, so if there are specifics for an OS they will be explicitly expressed at that location.
 #CentOS 8 still does not have support due to an issue concerning the names of the packets that differ from CentOS 7 & Debian (9 & 10)[Mariadb problem]
+#CentOS 8 outputs an HTTP Error (500) after implemnting the complete LAMP architecture (this must be a setting)
 #========================================================== How To Use ===============================================================================================
 #For CentOS 7 add the script in /tmp as well as the httpd.conf file located on my desktop\SCC\Projets\Git\test\httpd.conf
 #For CentOS 8 the script does not work, not yet implemented (commands are listed but not implemented), for this OS you will need to run "mysql_secure_installation" and set a root password (this is not a glitch, i had no choice but do it, otherwise my SQL commands do not run)
