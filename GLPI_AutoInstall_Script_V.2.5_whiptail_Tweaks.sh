@@ -188,7 +188,7 @@ InstallationGLPI(){
 	sleep 1
 	eval $installGLPI >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
 	echo -e "\033[33m ==> Decompression de GLPI\033[0m\n"
-	glpi1="tar -xvzf glpi-9.4.5.tgz"
+	glpi1="tar -xvzf glpi-9.5.3.tgz"
 	echo "Lancement de la commande: $glpi1"
 	sleep 1
 	eval $glpi1 >> /etc/GLPI_logs/log_GLPI.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -354,7 +354,7 @@ MiseaJour_DB9(){
 
 
 	majdebian="apt -y update"
-    echo "Lancement de la commande: $majdebian"
+	echo "Lancement de la commande: $majdebian"
     sleep 1
 	eval $majdebian > /etc/GLPI_logs/log_MAJ.txt
 	exit_status=$?
@@ -433,13 +433,18 @@ installationApache_DB9(){
 #Fonction qui installe le PHP ainsi que les extensions PHP nécessaire (Debian 9)
 installationPHP_DB9(){
 	echo -e "\033[33m ==> Installation PHP\033[0m"
-	php1="apt -y install php"
+	php1="apt -y install php7.3"
+	apt -y update
+	apt -y install apt-transport-https lsb-release ca-certificates
+	wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+	sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+	apt -y update
 	echo "Lancement de la commande: $php1"
 	sleep 1
 	eval $php1 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
 
 	echo -e "\033[33m ==> Installation des extensions PHP\033[0m"
-	php_exts="apt -y install php7.0-opcache php-apcu php-curl php7.0-common php-gd php-json php-mbstring php7.0-mysql php7.0-xml php-xml php-cli php-imap php-ldap php-xmlrpc"
+	php_exts="apt -y install php7.3-opcache php-apcu php-curl php7.3-common php-gd php-json php-mbstring php7.3-mysql php7.3-xml php-xml php-cli php-imap php-ldap php-xmlrpc"
 	echo "Lancement de la commande: $php_exts"
 	sleep 1
 	eval $php_exts >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -534,7 +539,7 @@ Debian9_Function(){
 #Fonction qui installe le PHP ainsi que les extensions PHP nécessaire (Debian 10)
 installationPHP_DB10(){
 	echo -e "\033[33m ==> Installation PHP\033[0m"
-	php1="apt -y install php"
+	php1="apt -y install php7.3"
 	echo "Lancement de la commande: $php1"
 	sleep 1
 	eval $php1 >> /etc/GLPI_logs/log_PHP.txt 2> /etc/GLPI_logs/logerreur.txt
@@ -655,6 +660,8 @@ fi
 #CentOS 8 still does not have support due to an issue concerning the names of the packets that differ from CentOS 7 & Debian (9 & 10)[Mariadb problem]
 #CentOS 8 outputs an HTTP Error (500) after implemnting the complete LAMP architecture (this must be a setting)
 #Find a way to check GLPI updates and automatically set the the download link for latest GLPI
+#Changed php for Debian from "php" to "php7.3" and added repositories to enable said download.
+#Add a Godmode menu (accessed by password) this menu will let the user choose what part of the installation they would like to do this will help for error testing as the user will be able to execute one specific part of the script. []
 #========================================================== How To Use ===============================================================================================
 #For CentOS 7 add the script in /tmp as well as the httpd.conf file located on my desktop\SCC\Projets\Git\test\httpd.conf
 #For CentOS 8 the script does not work, not yet implemented (commands are listed but not implemented), for this OS you will need to run "mysql_secure_installation" and set a root password (this is not a glitch, i had no choice but do it, otherwise my SQL commands do not run)
